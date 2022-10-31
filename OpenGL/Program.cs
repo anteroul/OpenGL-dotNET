@@ -3,43 +3,24 @@ using Silk.NET.OpenGL;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
-namespace HelloSilk
+namespace OpenGL
 {
     class Program
     {
         static IWindow window;
+        
         static GL gl;
-
-        static uint vbo;
-        static uint ebo;
-        static uint vao;
-        static uint shader;
-
-        static readonly string vss = @"
-            #version 330 core
-            layout (location = 0) in vec4 vPos;
-
-            void main()
-            {
-                gl_Position = vec4(vPos.x, vPos.y, vPos.z, 1.0);
-            }
-        ";
-
-        static readonly string fss = @"
-            #version 330 core
-            out vec4 FragColor;
-            void main()
-            {
-                FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
-            }
-        ";
+        static BufferObject<float> vbo;
+        static BufferObject<uint> ebo;
+        static VertexArrayObject<float, uint> vao;
+        static Shader shader;
 
         static readonly float[] vertices =
         {
-             0.5f,  0.5f, 0.0f,
-             0.5f, -0.5f, 0.0f,
-            -0.5f, -0.5f, 0.0f,
-            -0.5f,  0.5f, 0.5f
+             0.5f,  0.5f, 0.0f, 1, 0, 0, 1,
+             0.5f, -0.5f, 0.0f, 0, 0, 0, 1,
+            -0.5f, -0.5f, 0.0f, 0, 1, 0, 1,
+            -0.5f,  0.5f, 0.5f, 0, 0, 0, 1
         };
 
         static readonly uint[] indices =
@@ -76,50 +57,14 @@ namespace HelloSilk
             // Initialize OpenGL API
             gl = GL.GetApi(window);
 
-            // Create vertex array
-            vao = gl.GenVertexArray();
-            gl.BindVertexArray(vao);
+            ebo = new BufferObject<uint>(gl, indices, BufferTargetARB.ElementArrayBuffer);
+            vbo = new BufferObject<float>(gl, vertices, BufferTargetARB.ArrayBuffer);
+            vao = new VertexArrayObject<float, uint>(gl, vbo, ebo);
 
-            // Initialize the vertex buffer containing the vertex data
-            vbo = gl.GenBuffer();
-            gl.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            fixed (void* v = &vertices[0])
-            {
-                gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(vertices.Length * sizeof(uint)), v, BufferUsageARB.StaticDraw);
-            }
+            vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 7, 0);
+            vao.VertexAttributePointer(1, 4, VertexAttribPointerType.Float, 7, 3);
 
-            // Initialize the element buffer containing the vertex data
-            ebo = gl.GenBuffer();
-            gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, ebo);
-            fixed (void* i = &indices[0])
-            {
-                gl.BufferData(BufferTargetARB.ElementArrayBuffer, (nuint)(indices.Length * sizeof(uint)), i, BufferUsageARB.StaticDraw);
-            }
-
-            // Initialize the vertex shader
-            uint vs = gl.CreateShader(ShaderType.VertexShader);
-            gl.ShaderSource(vs, vss);
-            gl.CompileShader(vs);
-
-            // Initialize the fragment shader
-            uint fs = gl.CreateShader(ShaderType.FragmentShader);
-            gl.ShaderSource(fs, fss);
-            gl.CompileShader(fs);
-
-            // Linking the shader
-            shader = gl.CreateProgram();
-            gl.AttachShader(shader, vs);
-            gl.AttachShader(shader, fs);
-            gl.LinkProgram(shader);
-
-            // Discard the no longer useful individual shaders
-            gl.DetachShader(shader, vs);
-            gl.DetachShader(shader, fs);
-            gl.DeleteShader(vs);
-            gl.DeleteShader(fs);
-
-            gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), null);
-            gl.EnableVertexAttribArray(0);
+            shader = new Shader(gl, "shaders/shader.vert", "shaders/shader.frag");
         }
 
         static void OnUpdate(double obj)
@@ -130,8 +75,9 @@ namespace HelloSilk
         static unsafe void OnRender(double obj)
         {
             gl.Clear((uint)ClearBufferMask.ColorBufferBit);
-            gl.BindVertexArray(vao);
-            gl.UseProgram(shader);
+            vao.Bind();
+            shader.Use();
+            shader.SetUniform("uBlue", (float)Math.Sin(DateTime.Now.Millisecond / 1000f * Math.PI));
             gl.DrawElements(PrimitiveType.Triangles, (uint)indices.Length, DrawElementsType.UnsignedInt, null);
         }
 
@@ -145,10 +91,10 @@ namespace HelloSilk
 
         static void OnClose()
         {
-            gl.DeleteBuffer(vbo);
-            gl.DeleteBuffer(ebo);
-            gl.DeleteVertexArray(vao);
-            gl.DeleteProgram(shader);
+            vbo.Dispose();
+            ebo.Dispose();
+            vao.Dispose();
+            shader.Dispose();
         }
     }
 }
