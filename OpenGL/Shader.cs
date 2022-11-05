@@ -57,9 +57,20 @@ namespace OpenGL
 
         private uint LoadShader(ShaderType type, string path)
         {
-            string src = File.ReadAllText(path);
-            uint handle = _gl.CreateShader(type);
-            
+            string src;
+            uint handle;
+
+            try
+            {
+                src = File.ReadAllText(path);
+            }
+            catch (Exception)
+            {
+                src = File.ReadAllText(Program.rootDir + path);
+            }
+
+            handle = _gl.CreateShader(type);
+
             _gl.ShaderSource(handle, src);
             _gl.CompileShader(handle);
 
