@@ -66,7 +66,8 @@ namespace OpenGL
             }
             catch (Exception)
             {
-                src = File.ReadAllText(Program.rootDir + path);
+                path = Program.rootDir + path;
+                src = File.ReadAllText(path);
             }
 
             handle = _gl.CreateShader(type);
