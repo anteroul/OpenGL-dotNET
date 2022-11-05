@@ -10,6 +10,6 @@ out vec4 fColor;
 void main()
 {
     gl_Position = vec4(vPos, 1.0);
-    vec4 color = vec4(vColor.rg / 0.18, uBlue, vColor.a);
+    vec4 color = vec4(vColor.rg / 0.12, uBlue, vColor.a);
     fColor = color;
 }
