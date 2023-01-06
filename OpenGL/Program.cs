@@ -66,7 +66,7 @@ namespace OpenGL
             vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 7, 0);
             vao.VertexAttributePointer(1, 4, VertexAttribPointerType.Float, 7, 3);
 
-            shader = new Shader(gl, "shaders/shader.vs", "shaders/shader.fs");
+            shader = new Shader(gl, "shaders/shader.vert", "shaders/shader.frag");
         }
 
         static void OnUpdate(double obj)
